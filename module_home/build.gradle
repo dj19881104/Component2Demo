@@ -1,0 +1,77 @@
+// 通过isModule来判断是application还是module
+if (rootProject.ext.isModuleHome) {
+    apply plugin: 'com.android.library'
+} else {
+    apply plugin: 'com.android.application'
+}
+apply plugin: 'com.jakewharton.butterknife'
+
+
+android {
+    compileSdkVersion rootProject.ext.android.compileSdkVersion
+    buildToolsVersion rootProject.ext.android.buildToolsVersion
+
+    // 位置放在android里面，否则会如下报错
+    // Could not get unknown property 'manifest' for source set 'main' of type org.gradle.api.tasks.SourceSet.
+    sourceSets {
+        main {
+            if (rootProject.ext.isModuleHome) {
+                manifest.srcFile 'src/main/module/AndroidManifest.xml'
+            } else {
+                manifest.srcFile 'src/main/application/AndroidManifest.xml'
+                java {
+                    //排除java/module文件夹下的所有文件
+                    exclude '*module'
+                }
+            }
+        }
+    }
+
+    defaultConfig {
+
+        // 是application才需要applicationId
+        if (!rootProject.ext.isModuleHome) {
+            applicationId "com.vincentwang.home"
+        }
+        minSdkVersion rootProject.ext.android.minSdkVersion
+        targetSdkVersion rootProject.ext.android.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner rootProject.ext.android.testInstrumentationRunner
+
+        resourcePrefix "module_home_"
+
+        // 添加了javaCompileOptions,现在必须显式声明注释处理器
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath = true
+            }
+        }
+
+
+        // ARouter的配置
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
+            }
+        }
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation rootProject.ext.dependencies.appcompatX
+    implementation rootProject.ext.dependencies.constraintLayout
+    annotationProcessor rootProject.ext.dependencies.butterknife_apt
+    implementation project(path: ':base_library')
+}

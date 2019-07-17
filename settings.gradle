@@ -1,0 +1,1 @@
+include ':app', ':base_library', ':module_home', ':module_user', ':module_news'
